@@ -48,19 +48,22 @@ def process_openpifpaf(frames: list, fps: float, use_cpu: bool) -> NumPyPoseBody
         pil_im = PIL.Image.fromarray(frame).convert('RGB')
         predictions, gt_anns, image_meta = predictor.pil_image(pil_im)
 
-        people_xy = []
-        people_conf = []
+        if predictions is not None and len(predictions) > 0: # if a person is detected 
+            person = predictions[0]  # take the first detected person
+                                     # person.data shape: (133, 3) -> x, y, confidence
+            print(person)
+            data = person.data.copy().astype(np.float32)
+            print("Detected person with keypoints:", len(person.data))
+            keypoints = data[:, :2]
+            print("Keypoints (should be (133, 2): ", keypoints.shape)
+            confidence = data[:, 2]
+            print("Confidence.shape (should be (133)): ", confidence.shape)
+            print("Person.data contains: ", person.data)
 
-        for ann in predictions:
-            # ann.data shape: (133, 3) -> x, y, confidence
-            keypoints = ann.data[:, :2]
-            confidence = ann.data[:, 2]
-
-            people_xy.append(keypoints)
-            people_conf.append(confidence)
-
-        frames_data.append(people_xy)
-        frames_conf.append(people_conf)
+            frames_data.append([keypoints]) # shape (1, 133, 2)
+            frames_conf.append([confidence]) # shape (1, 133)
+        else: 
+            print("No person detected in frame.")
 
     data_array = np.array(frames_data, dtype=np.float32)
     conf_array = np.array(frames_conf, dtype=np.float32)

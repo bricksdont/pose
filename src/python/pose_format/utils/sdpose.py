@@ -123,18 +123,81 @@ def process_sdpose(frames, fps, use_cpu=False):
     frames_data = []
     frames_conf = []
 
+    for frame_idx, frame in enumerate(frames):
+
+        # do inference
+        result_image, all_keypoints, all_scores, info_text, json_file_path = inference_engine.predict_image(
+            frame, enable_yolo=True, 
+            restore_coords=True, flip_test=False, 
+            process_all_persons=False
+        )
+
+        if all_keypoints and len(all_keypoints) > 0:
+            kpts = all_keypoints[0]  # (K, 2)
+            scores = all_scores[0]   # (K,)
+            
+            # Ensure correct shape
+            kpts = np.asarray(kpts, dtype=np.float32)
+            scores = np.asarray(scores, dtype=np.float32)
+            
+            frames_data.append(kpts)
+            frames_conf.append(scores)
+        else:
+            # No person detected - add zero keypoints
+            num_keypoints = 133  # for wholebody
+            frames_data.append(np.zeros((num_keypoints, 2), dtype=np.float32))
+            frames_conf.append(np.zeros(num_keypoints, dtype=np.float32))
+    
+    # DEBUG: Check accumulated data
+    print(f"\nTotal frames collected: {len(frames_data)}")
+    for i, (kpts, conf) in enumerate(zip(frames_data[:3], frames_conf[:3])):  # Check first 3
+        print(f"Frame {i} data shape: {kpts.shape}, conf shape: {conf.shape}")
+    
+    data = np.asarray(frames_data, dtype=np.float32)
+    confidence = np.asarray(frames_conf, dtype=np.float32)
+    
+    print(f"Final data shape before expand_dims: {data.shape}")
+    print(f"Final confidence shape before expand_dims: {confidence.shape}")
+    
+    # Add people dimension: (frames, K, 2) -> (frames, 1, K, 2)
+    data = np.expand_dims(data, axis=1)
+    confidence = np.expand_dims(confidence, axis=1)
+
+    return NumPyPoseBody(
+        fps=fps,
+        data=data,
+        confidence=confidence,
+    )
+
+'''
+def process_sdpose(frames, fps, use_cpu=False):
+
+    inference_engine = SDPoseInference()
+    inference_engine.load_model(MODEL_PATH)
+
+    frames_data = []
+    frames_conf = []
+
     for frame in frames:
 
         # do inference
         result_image, all_keypoints, all_scores, info_text, json_file_path = inference_engine.predict_image(
             frame, enable_yolo=True, 
             restore_coords=True, flip_test=False, 
-            process_all_persons=True
+            process_all_persons=False
         )
 
-        frames_data.append(all_keypoints)   # (1, K, 2)
-        frames_conf.append(all_scores)  # (1, K)
+        if all_keypoints and len(all_keypoints) > 0:      
+            frames_data.append(all_keypoints[0][None, :, :])  # (1, K, 2)
+            frames_conf.append(all_scores[0][None, :])        # (1, K)
+        else:
+            # No person detected - add zero keypoints
+            num_keypoints = 133
+            frames_data.append(np.zeros((1, num_keypoints, 2), dtype=np.float32))
+            frames_conf.append(np.zeros((1, num_keypoints), dtype=np.float32))
         
+        print("Keypoints size: ", all_keypoints.shape)
+        print("Scores size: ", all_scores.shape)
         print("Keypoints: ", all_keypoints)
         print("All scores:", all_scores)
     
@@ -146,37 +209,7 @@ def process_sdpose(frames, fps, use_cpu=False):
         data=data,
         confidence=confidence,
     )
-
-
-def sdpose_outputs_to_body(
-    sdpose_results,   # iterable over frames
-    fps: float,
-    num_keypoints: int = 133,
-):
-    """
-    sdpose_results: iterable of (keypoints, confidence) per frame
-    """
-
-
-    for frame_idx, (kps, conf) in enumerate(sdpose_results):
-
-        # Normalize to numpy
-        if hasattr(kps, "detach"):
-            kps = kps.detach().cpu().numpy()
-        if hasattr(conf, "detach"):
-            conf = conf.detach().cpu().numpy()
-
-        # Ensure shape (K, 2)
-        kps = np.asarray(kps, dtype=np.float32).reshape(num_keypoints, 2)
-        conf = np.asarray(conf, dtype=np.float32).reshape(num_keypoints)
-
-        # Add person dimension (P = 1)
-        frames_data.append([kps])   # (1, K, 2)
-        frames_conf.append([conf])  # (1, K)
-
-    data = np.asarray(frames_data, dtype=np.float32)
-    confidence = np.asarray(frames_conf, dtype=np.float32)
-
+'''
 
 def detect_person_yolo(image, yolo_model_path="yolov8n.pt", confidence_threshold=0.5):
     """

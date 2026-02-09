@@ -35,9 +35,17 @@ def pose_video(input_path: str, output_path: str, format: str, use_cpu: bool, ad
                              additional_holistic_config=additional_config)
     elif format == 'openpose':
         from pose_format.utils.openpose import estimate_and_load_openpose
-        pose = estimate_and_load_openpose(input_path, 
-                            output_path,   
+        pose = estimate_and_load_openpose(frames,
+                             fps=fps,
+                             width=width,
+                             height=height,
+                             progress=progress,
+                             additional_holistic_config=additional_config)
+    elif format == 'yolopose':
+        from pose_format.utils.yolopose import load_yolopose
+        pose = load_yolopose(frames,
                             fps=fps, 
+                            use_cpu=use_cpu,
                             width=width,
                             height=height)
     elif format == 'openpifpaf':
@@ -53,6 +61,13 @@ def pose_video(input_path: str, output_path: str, format: str, use_cpu: bool, ad
                             output_path, 
                             use_cpu=use_cpu,
                             fps=fps,
+                            width=width,
+                            height=height)
+    elif format == 'sdpose':
+        from pose_format.utils.sdpose import estimate_and_load_sdpose
+        pose = estimate_and_load_sdpose(frames,
+                            fps=fps, 
+                            use_cpu=use_cpu,
                             width=width,
                             height=height)
     else:
@@ -98,7 +113,7 @@ def main():
     parser.add_argument('-i', required=True, type=str, help='path to input video file')
     parser.add_argument('-o', required=True, type=str, help='path to output pose file')
     parser.add_argument('--format',
-                        choices=['mediapipe', 'mmposewholebody', 'openpose', 'openpifpaf'],
+                        choices=['mediapipe', 'mmposewholebody', 'openpose', 'openpifpaf', 'yolopose', 'sdpose'],
                         default='mediapipe',
                         type=str,
                         help='type of pose estimation to use')

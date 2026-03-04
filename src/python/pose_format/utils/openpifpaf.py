@@ -1,3 +1,11 @@
+# openpifpaf 0.13.x monkey-patches ConvBNReLU from torchvision.models.mobilenetv2,
+# but this attribute was removed in torchvision 0.15.0+ (paired with torch 2.0+).
+# Restore it as an alias for Conv2dNormActivation before openpifpaf is imported.
+import torchvision.models.mobilenetv2
+if not hasattr(torchvision.models.mobilenetv2, 'ConvBNReLU'):
+    from torchvision.ops.misc import Conv2dNormActivation
+    torchvision.models.mobilenetv2.ConvBNReLU = Conv2dNormActivation
+
 import openpifpaf
 import PIL
 import numpy as np

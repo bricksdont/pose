@@ -60,12 +60,8 @@ def process_openpifpaf(frames: list, fps: float, use_cpu: bool) -> NumPyPoseBody
             person = predictions[0]  # take the first detected person
                                      # person.data shape: (133, 3) -> x, y, confidence
             data = person.data.copy().astype(np.float32)
-            print("Detected person with keypoints:", len(person.data))
             keypoints = data[:, :2]
-            print("Keypoints (should be (133, 2): ", keypoints.shape)
             confidence = data[:, 2]
-            print("Confidence.shape (should be (133)): ", confidence.shape)
-            print("Person.data contains: ", person.data)
 
             frames_data.append([keypoints]) # shape (1, 133, 2)
             frames_conf.append([confidence]) # shape (1, 133)

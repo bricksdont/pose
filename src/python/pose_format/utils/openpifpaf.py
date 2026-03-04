@@ -59,7 +59,6 @@ def process_openpifpaf(frames: list, fps: float, use_cpu: bool) -> NumPyPoseBody
         if predictions is not None and len(predictions) > 0: # if a person is detected 
             person = predictions[0]  # take the first detected person
                                      # person.data shape: (133, 3) -> x, y, confidence
-            print(person)
             data = person.data.copy().astype(np.float32)
             print("Detected person with keypoints:", len(person.data))
             keypoints = data[:, :2]

@@ -83,7 +83,7 @@ def get_corresponding_pose_path(video_path: Path, keep_video_suffixes: bool = Fa
     return video_path.with_suffix(".pose")
 
 
-def process_video(keep_video_suffixes: bool, pose_format: str, additional_config: dict, vid_path: Path) -> bool:
+def process_video(keep_video_suffixes: bool, pose_format: str, additional_config: dict, use_cpu: bool, vid_path: Path) -> bool:
     cpu_num = psutil.cpu_num() if hasattr(psutil, "cpu_num") else (
         os.sched_getcpu()) if hasattr(os, 'sched_getcpu') else "N/A"
     print(f'Estimating {vid_path} on CPU {cpu_num}')
@@ -96,7 +96,7 @@ def process_video(keep_video_suffixes: bool, pose_format: str, additional_config
             # pose_video function expects string, and passes it unchanged to cv2.VideoCapture(input_path)
             # if you give cv2.VideoCapture(input_path) a Path it crashes on older versions.
             # https://github.com/opencv/opencv/issues/15731
-            pose_video(str(vid_path.resolve()), str(pose_path.resolve()), pose_format, additional_config, progress=False)
+            pose_video(str(vid_path.resolve()), str(pose_path.resolve()), pose_format, use_cpu, additional_config, progress=False)
             return True
             
     except ValueError as e:
@@ -109,7 +109,7 @@ def main():
     parser.add_argument(
         "-f",
         "--format",
-        choices=["mediapipe"],
+        choices=['mediapipe', 'mmposewholebody', 'openpose', 'openpifpaf', 'yolopose', 'sdpose'],
         default="mediapipe",
         type=str,
         help="type of pose estimation to use",
@@ -151,6 +151,13 @@ def main():
         type=str,
         help="additional configuration for the pose estimator",
     )
+    parser.add_argument(
+        "--use-cpu",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Whether to use CPU for pose estimation (if supported)",
+    )
     args = parser.parse_args()
 
     videos_with_missing_pose_files = find_videos_with_missing_pose_files(
@@ -181,7 +188,7 @@ def main():
     else:
         print(f'Multiprocessing with {args.num_workers} workers on {len(os.sched_getaffinity(0))} available CPUs ...')
 
-    func = partial(process_video, args.keep_video_suffixes, args.format, additional_config)
+    func = partial(process_video, args.keep_video_suffixes, args.format, additional_config, args.use_cpu)
     for success in process_map(func, videos_with_missing_pose_files, max_workers=args.num_workers):
         if success:
             pose_with_no_errors_count += 1

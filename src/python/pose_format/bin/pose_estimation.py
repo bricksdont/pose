@@ -41,13 +41,6 @@ def pose_video(input_path: str, output_path: str, format: str, use_cpu: bool, ad
                              height=height,
                              progress=progress,
                              additional_holistic_config=additional_config)
-    elif format == 'yolopose':
-        from pose_format.utils.yolopose import load_yolopose
-        pose = load_yolopose(frames,
-                            fps=fps, 
-                            use_cpu=use_cpu,
-                            width=width,
-                            height=height)
     elif format == 'openpifpaf':
         from pose_format.utils.openpifpaf import estimate_and_load_openpifpaf
         pose = estimate_and_load_openpifpaf(frames,
@@ -73,12 +66,12 @@ def pose_video(input_path: str, output_path: str, format: str, use_cpu: bool, ad
     else:
         raise NotImplementedError('Pose format not supported')
 
-    # Build output filename
-    video_name = os.path.splitext(os.path.basename(input_path))[0]   # "SOUP" from ".../SOUP.mp4"
-    output_pose_file_path = os.path.join(output_path, f"{video_name}.pose")
-    os.makedirs(output_path, exist_ok=True)
 
-    # Write
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+    output_pose_file_path = output_path
+
     print(f'Saving to disk at path {output_pose_file_path}')
 
     with open(output_pose_file_path, "wb") as f:
@@ -113,7 +106,7 @@ def main():
     parser.add_argument('-i', required=True, type=str, help='path to input video file')
     parser.add_argument('-o', required=True, type=str, help='path to output pose file')
     parser.add_argument('--format',
-                        choices=['mediapipe', 'mmposewholebody', 'openpose', 'openpifpaf', 'yolopose', 'sdpose'],
+                        choices=['mediapipe', 'mmposewholebody', 'openpose', 'openpifpaf', 'sdpose'],
                         default='mediapipe',
                         type=str,
                         help='type of pose estimation to use')

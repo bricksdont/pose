@@ -118,7 +118,7 @@ def estimate_and_load_sdpose(frames: list,
 def process_sdpose(frames, fps, use_cpu=False):
 
     inference_engine = SDPoseInference()
-    inference_engine.load_model(MODEL_PATH)
+    inference_engine.load_model(MODEL_PATH, device="cpu" if use_cpu else "auto")
 
     frames_data = []
     frames_conf = []

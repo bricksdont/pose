@@ -109,7 +109,7 @@ def main():
     parser.add_argument(
         "-f",
         "--format",
-        choices=['mediapipe', 'mmposewholebody', 'openpose', 'openpifpaf', 'yolopose', 'sdpose'],
+        choices=['mediapipe', 'mmposewholebody', 'openpose', 'openpifpaf', 'yolopose', 'sdpose', 'sapiens'],
         default="mediapipe",
         type=str,
         help="type of pose estimation to use",

@@ -59,7 +59,14 @@ def pose_video(input_path: str, output_path: str, format: str, use_cpu: bool, ad
     elif format == 'sdpose':
         from pose_format.utils.sdpose import estimate_and_load_sdpose
         pose = estimate_and_load_sdpose(frames,
-                            fps=fps, 
+                            fps=fps,
+                            use_cpu=use_cpu,
+                            width=width,
+                            height=height)
+    elif format == 'sapiens':
+        from pose_format.utils.sapiens import estimate_and_load_sapiens
+        pose = estimate_and_load_sapiens(frames,
+                            fps=fps,
                             use_cpu=use_cpu,
                             width=width,
                             height=height)
@@ -106,7 +113,7 @@ def main():
     parser.add_argument('-i', required=True, type=str, help='path to input video file')
     parser.add_argument('-o', required=True, type=str, help='path to output pose file')
     parser.add_argument('--format',
-                        choices=['mediapipe', 'mmposewholebody', 'openpose', 'openpifpaf', 'sdpose'],
+                        choices=['mediapipe', 'mmposewholebody', 'openpose', 'openpifpaf', 'sdpose', 'sapiens'],
                         default='mediapipe',
                         type=str,
                         help='type of pose estimation to use')

@@ -74,10 +74,14 @@ def pose_video(input_path: str, output_path: str, format: str, use_cpu: bool, ad
         raise NotImplementedError('Pose format not supported')
 
 
-    output_dir = os.path.dirname(output_path)
-    if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
-    output_pose_file_path = output_path
+    if os.path.isdir(output_path):
+        input_stem = os.path.splitext(os.path.basename(input_path))[0]
+        output_pose_file_path = os.path.join(output_path, input_stem + '.pose')
+    else:
+        output_dir = os.path.dirname(output_path)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+        output_pose_file_path = output_path
 
     print(f'Saving to disk at path {output_pose_file_path}')
 

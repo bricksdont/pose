@@ -449,6 +449,14 @@ def _sapiens_frames_to_json(frames, use_cpu: bool):
     """Yield per-frame {'frame': idx, 'keypoints': {name: [x, y, score]}} dicts."""
     SapiensPoseEstimation, SapiensPoseEstimationType = _lazy_import_sapiens_inference()
 
+    # Upstream sapiens_inference hardcodes the 1B torchscript filename as AP_640, but
+    # Meta retrained the model and the file on HuggingFace is now AP_639. Patch the
+    # enum value so download_hf_model constructs a URL that actually resolves.
+    # Remove this once https://github.com/ibaiGorordo/Sapiens-Pytorch-Inference is updated.
+    SapiensPoseEstimationType.POSE_ESTIMATION_1B._value_ = (
+        "sapiens-pose-1b-torchscript/sapiens_1b_goliath_best_goliath_AP_639_torchscript.pt2"
+    )
+
     device, dtype = _get_device(use_cpu)
     print(f"Loading Sapiens model on {device} ({dtype})...")
     estimator = SapiensPoseEstimation(

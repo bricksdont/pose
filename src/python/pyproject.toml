@@ -27,6 +27,13 @@ dev = [
     "tensorflow",
     "matplotlib"
 ]
+sapiens = [
+    "torch",
+    "opencv-python",
+    "requests",
+    "ultralytics",
+    "sapiens-inferece @ git+https://github.com/ibaiGorordo/Sapiens-Pytorch-Inference.git", # upstream has a typo ("inferece" instead of "inference") which we must match
+]
 
 [tool.setuptools]
 packages = [

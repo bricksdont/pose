@@ -395,12 +395,12 @@ def _pin_sapiens_hf_revision():
             module.hf_hub_download = _wrap(fn)
 
 
-def _resolve_pose_type(SapiensPoseEstimationType):
-    """Read SAPIENS_MODEL_SIZE (default '1b') and return the matching enum member."""
-    size = os.environ.get("SAPIENS_MODEL_SIZE", "1b").lower()
+def _resolve_pose_type(SapiensPoseEstimationType, model_size: str = "1b"):
+    """Return the SapiensPoseEstimationType enum member for *model_size* ('0.3b', '0.6b', '1b')."""
+    size = model_size.lower()
     if size not in _SAPIENS_MODEL_SIZE_MAP:
         raise ValueError(
-            f"Invalid SAPIENS_MODEL_SIZE={size!r}. Valid values: {sorted(_SAPIENS_MODEL_SIZE_MAP)}"
+            f"Invalid model_size={size!r}. Valid values: {sorted(_SAPIENS_MODEL_SIZE_MAP)}"
         )
     model_type = getattr(SapiensPoseEstimationType, _SAPIENS_MODEL_SIZE_MAP[size])
 
@@ -450,7 +450,7 @@ def _ensure_sapiens_model_and_cwd(model_type):
         os.chdir(repo_root)
 
 
-def _lazy_import_sapiens_inference():
+def _lazy_import_sapiens_inference(model_size: str = "1b"):
     _pin_sapiens_hf_revision()
     try:
         from sapiens_inference.pose import SapiensPoseEstimation, SapiensPoseEstimationType
@@ -461,7 +461,7 @@ def _lazy_import_sapiens_inference():
                                "git+https://github.com/ibaiGorordo/Sapiens-Pytorch-Inference.git"])
         from sapiens_inference.pose import SapiensPoseEstimation, SapiensPoseEstimationType
     _pin_sapiens_hf_revision()
-    model_type = _resolve_pose_type(SapiensPoseEstimationType)
+    model_type = _resolve_pose_type(SapiensPoseEstimationType, model_size)
     _ensure_sapiens_model_and_cwd(model_type)
     return SapiensPoseEstimation, model_type
 
@@ -476,9 +476,9 @@ def _get_device(use_cpu: bool):
     return torch.device("cpu"), torch.float32
 
 
-def _sapiens_frames_to_json(frames, use_cpu: bool):
+def _sapiens_frames_to_json(frames, use_cpu: bool, model_size: str = "1b"):
     """Yield per-frame {'frame': idx, 'keypoints': {name: [x, y, score]}} dicts."""
-    SapiensPoseEstimation, model_type = _lazy_import_sapiens_inference()
+    SapiensPoseEstimation, model_type = _lazy_import_sapiens_inference(model_size)
 
     device, dtype = _get_device(use_cpu)
     print(f"Loading Sapiens model on {device} ({dtype})...")
@@ -506,8 +506,9 @@ def estimate_and_load_sapiens(frames,
                               fps: float = 24,
                               use_cpu: bool = False,
                               width: int = 1000,
-                              height: int = 1000) -> Pose:
+                              height: int = 1000,
+                              model_size: str = "1b") -> Pose:
     """Estimate pose with Sapiens on RGB frames and return a Pose object."""
     print("Loading pose with Sapiens...")
-    frame_entries = list(_sapiens_frames_to_json(frames, use_cpu=use_cpu))
+    frame_entries = list(_sapiens_frames_to_json(frames, use_cpu=use_cpu, model_size=model_size))
     return _sapiens_json_to_pose(frame_entries, fps=fps, width=width, height=height)
